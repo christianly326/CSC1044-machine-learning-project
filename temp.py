@@ -59,3 +59,32 @@ test_generator = test_datagen.flow_from_dataframe(
 print(f"Number of training images: {len(train_df)}")
 print(f"Number of validation images: {len(val_df)}")
 print(f"Number of test images: {len(test_df)}")
+
+
+pipe = Pipeline([
+    ('classifier', LogisticRegression(max_iter=1000))
+])
+
+# Fit the pipeline
+pipe.fit(X_train, np.argmax(y_train, axis=1))
+
+# Evaluate the pipeline
+accuracy = pipe.score(X_val, np.argmax(y_val, axis=1))
+
+pipe.predict(X_val)
+print(f"Validation Accuracy: {accuracy:.4f}")
+
+def extract_features(generator, model, has_label=True):
+    features = []
+    labels = [] if has_label else None
+    for X_batch, *y_batch in generator:
+        features_batch = model.predict(X_batch)  # Extract features
+        features.append(features_batch)
+        if has_label:
+            labels.append(y_batch)
+        if len(features) * generator.batch_size >= generator.samples:
+            break
+    if has_label:
+        return np.vstack(features), np.vstack(labels)
+    else:
+        return np.vstack(features)
